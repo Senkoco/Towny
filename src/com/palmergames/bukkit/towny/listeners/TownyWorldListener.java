@@ -67,7 +67,7 @@ public class TownyWorldListener implements Listener {
 	
 
 		// This is a world we've never seen before, make a new TownyWorld.
-		TownyUniverse.getInstance().getDataSource().newWorld(world);
+		TownyUniverse.getInstance().newWorld(world);
 		TownyWorld townyWorld = TownyAPI.getInstance().getTownyWorld(world.getUID());
 		if (townyWorld == null)
 			TownyMessaging.sendErrorMsg("Could not create data for " + world.getName());

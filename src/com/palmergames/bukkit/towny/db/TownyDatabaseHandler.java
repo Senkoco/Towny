@@ -1072,10 +1072,10 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 	protected void removeFromUniverse(TownyDBFileType type, UUID uuid) {
 		switch (type) {
 		case JAIL -> universe.unregisterJail(uuid);
-		case NATION -> throw new UnsupportedOperationException("Unimplemented case: " + type);
+		case NATION -> universe.unregisterNation(uuid);
 		case PLOTGROUP -> universe.unregisterGroup(uuid);
-		case RESIDENT -> throw new UnsupportedOperationException("Unimplemented case: " + type);
-		case TOWN -> throw new UnsupportedOperationException("Unimplemented case: " + type);
+		case RESIDENT -> universe.unregisterResident(uuid);
+		case TOWN -> universe.unregisterTown(uuid);
 		case TOWNBLOCK -> throw new UnsupportedOperationException("Unimplemented case: " + type);
 		case WORLD -> throw new UnsupportedOperationException("Unimplemented case: " + type);
 		default -> throw new IllegalArgumentException("Unexpected value: " + type);
@@ -1119,7 +1119,7 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 
 		// Remove resident from residents' friendslists.
 		List<Resident> toSave = new ArrayList<>();
-		for (Resident toCheck : universe.getResidents()) {		
+		for (Resident toCheck : universe.getResidents()) {
 			TownyMessaging.sendDebugMsg("Checking friends of: " + toCheck.getName());
 			if (toCheck.hasFriend(resident)) {
 				TownyMessaging.sendDebugMsg("       - Removing Friend: " + resident.getName());
@@ -1143,22 +1143,15 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 			}
 		}
 
-		if (resident.hasUUID() && !resident.isNPC())
-			saveHibernatedResident(resident.getUUID(), resident.getRegistered());
-
-		// Delete the residents file.
-		deleteResident(resident);
-		// Remove the residents record from memory.
-		try {
-			universe.unregisterResident(resident);
-		} catch (NotRegisteredException e) {
-			e.printStackTrace();
-		}
-
 		// Clear accounts
 		if (TownySettings.isDeleteEcoAccount() && TownyEconomyHandler.isActive())
 			resident.getAccount().removeAccount();
 
+		if (resident.hasUUID() && !resident.isNPC())
+			saveHibernatedResident(resident.getUUID(), resident.getRegistered());
+
+		// Remove the residents record from memory.
+		removeFromUniverse(TownyDBFileType.RESIDENT, resident.getUUID());
 		plugin.deleteCache(resident);
 		
 		BukkitTools.fireEvent(new DeletePlayerEvent(resident));
@@ -1246,17 +1239,15 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 		
 		removeTownBlocks(town);
 
-		List<Resident> toSave = new ArrayList<>(town.getResidents());
-
-		if (town.hasNation()) {
+		if (town.hasNation())
 			town.removeNation();
-		}
 
-		for (Resident resident : toSave) {
+		// Remove all of the Town's Residents.
+		for (Resident resident : new ArrayList<>(town.getResidents())) {
 			resident.clearModes();
 			resident.removeTown();
 		}
-		
+
 		// Look for residents inside of this town's jail(s) and free them, more than 
 		// likely the above removeTownBlocks(town) will have already set them free. 
 		new ArrayList<>(universe.getJailedResidentMap()).stream()
@@ -1274,13 +1265,7 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 			}
 			saveWorld(townyWorld);
 		}
-
-		try {
-			universe.unregisterTown(town);
-		} catch (NotRegisteredException e) {
-			TownyMessaging.sendErrorMsg(e.getMessage());
-		}
-		
+		removeFromUniverse(TownyDBFileType.TOWN, town.getUUID());
 		plugin.resetCache();
 		deleteTown(town);
 		
@@ -1343,17 +1328,9 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 		if (TownyEconomyHandler.isActive())
 			nation.getAccount().removeAccount();
 
-		//Delete nation and save towns
-		deleteNation(nation);
+		//Save towns
 		List<Town> toSave = new ArrayList<>(nation.getTowns());
 		nation.clear();
-
-		try {
-			universe.unregisterNation(nation);
-		} catch (NotRegisteredException e) {
-			// Just print out the exception. Very unlikely to happen.
-			e.printStackTrace();
-		}
 
 		for (Town town : toSave) {
 
@@ -1370,6 +1347,7 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 			BukkitTools.fireEvent(new NationRemoveTownEvent(town, nation));
 		}
 
+		removeFromUniverse(TownyDBFileType.NATION, nation.getUUID());
 		plugin.resetCache();
 
 		BukkitTools.fireEvent(new DeleteNationEvent(nation, king));
@@ -1405,7 +1383,7 @@ public abstract class TownyDatabaseHandler extends TownyDataSource {
 
 	@Override
 	public void removePlotGroup(PlotGroup group) {
-		universe.unregisterGroup(group.getUUID());
+		removeFromUniverse(TownyDBFileType.PLOTGROUP, group.getUUID());
 		deletePlotGroup(group);
 	}
 
