@@ -10,6 +10,7 @@ import com.palmergames.bukkit.towny.TownyUniverse;
 import com.palmergames.bukkit.towny.TownyUpdateChecker;
 import com.palmergames.bukkit.towny.event.resident.NewResidentEvent;
 import com.palmergames.bukkit.towny.exceptions.AlreadyRegisteredException;
+import com.palmergames.bukkit.towny.exceptions.InvalidNameException;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Resident;
@@ -81,7 +82,7 @@ public class OnPlayerLogin implements Runnable {
 				 * Make a brand new Resident.
 				 */
 				try {
-					universe.getDataSource().newResident(player.getName(), player.getUniqueId());
+					universe.newResident(player.getUniqueId(), player.getName());
 					TownySettings.incrementUUIDCount();
 					
 					resident = universe.getResident(player.getUniqueId());
@@ -113,7 +114,10 @@ public class OnPlayerLogin implements Runnable {
 					resident.save();
 					BukkitTools.fireEvent(new NewResidentEvent(resident));
 					
-				} catch (AlreadyRegisteredException | NotRegisteredException ignored) {}
+				} catch (AlreadyRegisteredException ignored) {
+				} catch (InvalidNameException e) {
+					TownyMessaging.sendErrorMsg(player, e.getMessage() + " You have not been registered correctly with Towny!");
+				}
 
 			}
 
