@@ -1000,5 +1000,4 @@ public class TownyWorld extends TownyObject {
 	public void save() {
 		TownyUniverse.getInstance().getDataSource().saveWorld(this);
 	}
-
 }
