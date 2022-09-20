@@ -21,6 +21,8 @@ import com.palmergames.bukkit.util.BukkitTools;
 import com.palmergames.util.FileMgmt;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
+import org.bukkit.World;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
@@ -603,7 +605,15 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 	
 	@Override
 	public boolean loadWorldList() {
-		return loadResultSetListOfType(TownyDBTableType.WORLD, uuid -> universe.newWorldInternal(uuid));
+		loadResultSetListOfType(TownyDBTableType.WORLD, uuid -> universe.newWorldInternal(uuid));
+		for (World world : plugin.getServer().getWorlds()) {
+			if (universe.getWorldIDMap().containsKey(world.getUID()))
+				continue;
+			TownyWorld townyWorld = new TownyWorld(world.getName(), world.getUID());
+			universe.registerTownyWorld(townyWorld);
+			saveWorld(townyWorld);
+		}
+		return true;
 	}
 
 	@Override

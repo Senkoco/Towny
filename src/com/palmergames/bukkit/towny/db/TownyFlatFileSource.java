@@ -197,27 +197,25 @@ public final class TownyFlatFileSource extends TownyDatabaseHandler {
 
 	@Override
 	public boolean loadWorldList() {
-		if (plugin != null) {
-			TownyMessaging.sendDebugMsg(Translation.of("flatfile_dbg_loading_server_world_list"));
-			for (World world : plugin.getServer().getWorlds()) {
-				File worldFile = new File(getFileOfTypeWithUUID(TownyDBFileType.WORLD, world.getUID()));
-				TownyWorld townyWorld = new TownyWorld(world.getName(), world.getUID());
-				universe.registerTownyWorld(townyWorld);
-				if (!worldFile.exists())
-					saveNewTownyWorldFile(townyWorld);
-			}
-		}
+		TownyMessaging.sendDebugMsg(Translation.of("flatfile_dbg_loading_server_world_list"));
+		loadFlatFileListOfType(TownyDBFileType.WORLD, uuid -> universe.newWorldInternal(uuid));
+		for (World world : plugin.getServer().getWorlds()) {
+			if (universe.getWorldIDMap().containsKey(world.getUID()))
+				continue;
 
-		return loadFlatFileListOfType(TownyDBFileType.WORLD, uuid -> universe.newWorldInternal(uuid));
-	}
-
-	private void saveNewTownyWorldFile(TownyWorld townyWorld) {
-		try {
-			FileMgmt.mapToFile(ObjectSaveUtil.getWorldMap(townyWorld), getFileOfTypeWithUUID(TownyDBFileType.WORLD, townyWorld.getUUID()));
-		} catch (Exception e) {
-			logger.warn("Could not save new world file for TownyWorld: " + townyWorld.getUUID());
-			e.printStackTrace();
+			// Register and create files for any worlds which did not have files yet.
+			TownyWorld townyWorld = new TownyWorld(world.getName(), world.getUID());
+			universe.registerTownyWorld(townyWorld);
+			File worldFile = new File(getFileOfTypeWithUUID(TownyDBFileType.WORLD, world.getUID()));
+			if (!worldFile.exists())
+				try {
+					FileMgmt.mapToFile(ObjectSaveUtil.getWorldMap(townyWorld), getFileOfTypeWithUUID(TownyDBFileType.WORLD, townyWorld.getUUID()));
+				} catch (Exception e) {
+					logger.warn("Could not save new world file for TownyWorld: " + townyWorld.getUUID());
+					e.printStackTrace();
+				}
 		}
+		return true;
 	}
 
 	@Override
