@@ -232,6 +232,7 @@ public class SQL_Schema {
 
 	private static List<String> getWorldColumns() {
 		List<String> columns = new ArrayList<>();
+		columns.add("`uuid` VARCHAR(36) NOT NULL");
 		columns.add("`name` VARCHAR(32) NOT NULL");
 		columns.add("`claimable` bool NOT NULL DEFAULT '0'");
 		columns.add("`pvp` bool NOT NULL DEFAULT '0'");

@@ -237,7 +237,7 @@ public class ObjectSaveUtil {
 	public static HashMap<String, Object> getWorldMap(TownyWorld world) throws Exception {
 		try {
 			HashMap<String, Object> world_hm = new HashMap<>();
-
+			world_hm.put("uuid", world.getUUID());
 			world_hm.put("name", world.getName());
 			world_hm.put("usingTowny", world.isUsingTowny());
 			world_hm.put("warAllowed", world.isWarAllowed());

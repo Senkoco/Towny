@@ -484,7 +484,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 		
 		private String getSingular() {
 			// Hibernated Residents are never loaded so this method is never called on them.
-			return tableName.substring(tableName.length()-1).toLowerCase(Locale.ROOT);
+			return tableName.substring(0, tableName.length()-1).toLowerCase(Locale.ROOT);
 		}
 		
 		public String getSaveLocation(String rowKeyName) {
@@ -609,9 +609,16 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 		for (World world : plugin.getServer().getWorlds()) {
 			if (universe.getWorldIDMap().containsKey(world.getUID()))
 				continue;
+
+			// Register and create rows for any worlds which did not have files yet.
 			TownyWorld townyWorld = new TownyWorld(world.getName(), world.getUID());
 			universe.registerTownyWorld(townyWorld);
-			saveWorld(townyWorld);
+			try {
+				QueueUpdateDB("WORLDS", ObjectSaveUtil.getWorldMap(townyWorld), null);
+			} catch (Exception e) {
+				logger.warn("Could not save new world row for TownyWorld: " + townyWorld.getUUID());
+				e.printStackTrace();
+			}
 		}
 		return true;
 	}
@@ -709,7 +716,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 			ResultSet rs = s.executeQuery("SELECT uuid FROM " + tb_prefix + "JAILS WHERE uuid='" + uuid + "'")) {
 			return loadResultSetIntoHashMap(rs);
 		} catch (SQLException e) {
-			TownyMessaging.sendErrorMsg("SQL: Unabled to find jail with UUID " + uuid.toString() + " in the database!");
+			TownyMessaging.sendErrorMsg("SQL: Unable to find jail with UUID " + uuid.toString() + " in the database!");
 			return null;
 		}
 	}
@@ -722,7 +729,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 			ResultSet rs = s.executeQuery("SELECT groupID FROM " + tb_prefix + "PLOTGROUPS WHERE groupID='" + uuid + "'")) {
 			return loadResultSetIntoHashMap(rs);
 		} catch (SQLException e) {
-			TownyMessaging.sendErrorMsg("SQL: Unabled to find plotgroup with UUID " + uuid.toString() + " in the database!");
+			TownyMessaging.sendErrorMsg("SQL: Unable to find plotgroup with UUID " + uuid.toString() + " in the database!");
 			return null;
 		}
 	}
@@ -735,7 +742,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 			ResultSet rs = s.executeQuery("SELECT uuid FROM " + tb_prefix + "RESIDENTS WHERE uuid='" + uuid + "'")) {
 			return loadResultSetIntoHashMap(rs);
 		} catch (SQLException e) {
-			TownyMessaging.sendErrorMsg("SQL: Unabled to find resident with UUID " + uuid.toString() + " in the database!");
+			TownyMessaging.sendErrorMsg("SQL: Unable to find resident with UUID " + uuid.toString() + " in the database!");
 			return null;
 		}
 	}
@@ -748,7 +755,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 			ResultSet rs = s.executeQuery("SELECT uuid FROM " + tb_prefix + "TOWNS WHERE uuid='" + uuid + "'")) {
 			return loadResultSetIntoHashMap(rs);
 		} catch (SQLException e) {
-			TownyMessaging.sendErrorMsg("SQL: Unabled to find town with UUID " + uuid.toString() + " in the database!");
+			TownyMessaging.sendErrorMsg("SQL: Unable to find town with UUID " + uuid.toString() + " in the database!");
 			return null;
 		}
 	}
@@ -761,7 +768,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 			ResultSet rs = s.executeQuery("SELECT uuid FROM " + tb_prefix + "NATIONS WHERE uuid='" + uuid + "'")) {
 			return loadResultSetIntoHashMap(rs);
 		} catch (SQLException e) {
-			TownyMessaging.sendErrorMsg("SQL: Unabled to find nation with UUID " + uuid.toString() + " in the database!");
+			TownyMessaging.sendErrorMsg("SQL: Unable to find nation with UUID " + uuid.toString() + " in the database!");
 			return null;
 		}
 	}
@@ -774,7 +781,7 @@ public final class TownySQLSource extends TownyDatabaseHandler {
 			ResultSet rs = s.executeQuery("SELECT uuid FROM " + tb_prefix + "WORLDS WHERE uuid='" + uuid + "'")) {
 			return loadResultSetIntoHashMap(rs);
 		} catch (SQLException e) {
-			TownyMessaging.sendErrorMsg("SQL: Unabled to find nation with UUID " + uuid.toString() + " in the database!");
+			TownyMessaging.sendErrorMsg("SQL: Unable to find world with UUID " + uuid.toString() + " in the database!");
 			return null;
 		}
 	}
