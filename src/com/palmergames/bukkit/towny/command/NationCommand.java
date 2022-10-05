@@ -1676,6 +1676,8 @@ public class NationCommand extends BaseCommand implements CommandExecutor {
 		Player player = resident.getPlayer();
 		if (player == null)
 			throw new TownyException("Could not add " + targetNation + " as Ally because your Player is null! This shouldn't be possible!");
+		if (nation.hasAlly(targetNation))
+			throw new TownyException(Translatable.of("msg_already_ally", targetNation));
 		if (!targetNation.hasEnemy(nation)) {
 			NationPreAddAllyEvent preAddAllyEvent = new NationPreAddAllyEvent(nation, targetNation);
 			Bukkit.getPluginManager().callEvent(preAddAllyEvent);
@@ -1723,12 +1725,8 @@ public class NationCommand extends BaseCommand implements CommandExecutor {
 
 	private void nationAddNPCNationAsAlly(Player player, Resident resident, Nation nation, Nation targetNation) throws TownyException {
 		if (TownyUniverse.getInstance().getPermissionSource().isTownyAdmin(player)) {
-			try {
-				targetNation.addAlly(nation);
-				nation.addAlly(targetNation);
-			} catch (AlreadyRegisteredException e) {
-				e.printStackTrace();
-			}
+			targetNation.addAlly(nation);
+			nation.addAlly(targetNation);
 			TownyMessaging.sendPrefixedNationMessage(nation, Translatable.of("msg_allied_nations", resident, targetNation));
 			TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_added_ally", nation));
 		} else {
@@ -1806,59 +1804,62 @@ public class NationCommand extends BaseCommand implements CommandExecutor {
 	public void nationEnemy(Player player, Nation nation, List<Nation> enemies, boolean add) {
 
 		ArrayList<Nation> remove = new ArrayList<>();
-		for (Nation targetNation : enemies)
-			try {
-				if (add && !nation.getEnemies().contains(targetNation)) {
-					NationPreAddEnemyEvent npaee = new NationPreAddEnemyEvent(nation, targetNation);
-					Bukkit.getPluginManager().callEvent(npaee);
+		for (Nation targetNation : enemies) {
+			if (add && !nation.getEnemies().contains(targetNation)) {
+				NationPreAddEnemyEvent npaee = new NationPreAddEnemyEvent(nation, targetNation);
+				Bukkit.getPluginManager().callEvent(npaee);
+				
+				if (!npaee.isCancelled()) {
+					nation.addEnemy(targetNation);
 					
-					if (!npaee.isCancelled()) {
-						nation.addEnemy(targetNation);
-						
-						NationAddEnemyEvent naee = new NationAddEnemyEvent(nation, targetNation);
-						Bukkit.getPluginManager().callEvent(naee);
+					NationAddEnemyEvent naee = new NationAddEnemyEvent(nation, targetNation);
+					Bukkit.getPluginManager().callEvent(naee);
 
-						// Remove the targetNation from the nation ally list if present.
-						if (nation.hasAlly(targetNation)) {
-							nation.removeAlly(targetNation);
-							Bukkit.getPluginManager().callEvent(new NationRemoveAllyEvent(nation, targetNation));
-							TownyMessaging.sendPrefixedNationMessage(nation, Translatable.of("msg_removed_ally", targetNation));
-							TownyMessaging.sendMsg(player, Translatable.of("msg_ally_removed_successfully"));
-						}
-						
-						// Remove the nation from the targetNation ally list if present.
-						if (targetNation.hasAlly(nation)) {
-							targetNation.removeAlly(nation);
-							Bukkit.getPluginManager().callEvent(new NationRemoveAllyEvent(targetNation, nation));
-							TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_removed_ally", nation));
-							TownyMessaging.sendMsg(player, Translatable.of("msg_ally_removed_successfully"));
-						}
-
-						TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_added_enemy", nation));
-					} else {
-						TownyMessaging.sendErrorMsg(player, npaee.getCancelMessage());
-						remove.add(targetNation);
+					// Remove the targetNation from the nation ally list if present.
+					if (nation.hasAlly(targetNation)) {
+						nation.removeAlly(targetNation);
+						Bukkit.getPluginManager().callEvent(new NationRemoveAllyEvent(nation, targetNation));
+						TownyMessaging.sendPrefixedNationMessage(nation, Translatable.of("msg_removed_ally", targetNation));
+						TownyMessaging.sendMsg(player, Translatable.of("msg_ally_removed_successfully"));
+					}
+					
+					// Remove the nation from the targetNation ally list if present.
+					if (targetNation.hasAlly(nation)) {
+						targetNation.removeAlly(nation);
+						Bukkit.getPluginManager().callEvent(new NationRemoveAllyEvent(targetNation, nation));
+						TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_removed_ally", nation));
+						TownyMessaging.sendMsg(player, Translatable.of("msg_ally_removed_successfully"));
 					}
 
-				} else if (nation.getEnemies().contains(targetNation)) {
-					NationPreRemoveEnemyEvent npree = new NationPreRemoveEnemyEvent(nation, targetNation);
-					Bukkit.getPluginManager().callEvent(npree);
-					if (!npree.isCancelled()) {
-						nation.removeEnemy(targetNation);
-
-						NationRemoveEnemyEvent nree = new NationRemoveEnemyEvent(nation, targetNation);
-						Bukkit.getPluginManager().callEvent(nree);
-						
-						TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_removed_enemy", nation));
-					} else {
-						TownyMessaging.sendErrorMsg(player, npree.getCancelMessage());
-						remove.add(targetNation);
-					}
+					TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_added_enemy", nation));
+				} else {
+					TownyMessaging.sendErrorMsg(player, npaee.getCancelMessage());
+					remove.add(targetNation);
 				}
-
-			} catch (AlreadyRegisteredException | NotRegisteredException e) {
+			} else {
+				// TargetNation is already an enemy.
 				remove.add(targetNation);
 			}
+
+			if (!add && nation.getEnemies().contains(targetNation)) {
+				NationPreRemoveEnemyEvent npree = new NationPreRemoveEnemyEvent(nation, targetNation);
+				Bukkit.getPluginManager().callEvent(npree);
+				if (!npree.isCancelled()) {
+					nation.removeEnemy(targetNation);
+
+					NationRemoveEnemyEvent nree = new NationRemoveEnemyEvent(nation, targetNation);
+					Bukkit.getPluginManager().callEvent(nree);
+					
+					TownyMessaging.sendPrefixedNationMessage(targetNation, Translatable.of("msg_removed_enemy", nation));
+				} else {
+					TownyMessaging.sendErrorMsg(player, npree.getCancelMessage());
+					remove.add(targetNation);
+				}
+			} else {
+				// TargetNation is already not an enemy.
+				remove.add(targetNation);
+			}
+		}
 		
 		for (Nation newEnemy : remove)
 			enemies.remove(newEnemy);
