@@ -178,7 +178,7 @@ public class MoneyUtil {
 				balance = town.getAccount().getHoldingBalance();
 			} else if (nation && TownySettings.getNationBankCap() > 0) {
 				bankcap = TownySettings.getNationBankCap();
-				balance = town.getNation().getAccount().getHoldingBalance();
+				balance = town.getNationOrNull().getAccount().getHoldingBalance();
 			}
 			if (bankcap > 0 && amount + balance > bankcap)
 				throw new TownyException(Translatable.of("msg_err_deposit_capped", bankcap));

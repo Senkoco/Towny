@@ -1450,14 +1450,11 @@ public class TownyAdminCommand extends BaseCommand implements CommandExecutor {
 				checkPermOrThrow(sender, PermissionNodes.TOWNY_COMMAND_TOWNYADMIN_TOWN_OUTLAW.getNode());
 				TownCommand.parseTownOutlawCommand(sender, StringMgmt.remArgs(split, 2), true, town);
 			} else if (split[1].equalsIgnoreCase("leavenation")) {
-				Nation nation = null;
-				if (town.hasNation())
-					nation = town.getNation();
-				else
+				Nation nation = town.getNationOrNull();
+				if (nation == null)
 					throw new TownyException(Translatable.of("That town does not belong to a nation."));
 				
 				town.removeNation();
-				
 				plugin.resetCache();
 
 				TownyMessaging.sendPrefixedNationMessage(nation, Translatable.of("msg_nation_town_left", StringMgmt.remUnderscore(town.getName())));
@@ -2071,20 +2068,9 @@ public class TownyAdminCommand extends BaseCommand implements CommandExecutor {
 			if (split.length < 2) {
 				HelpMenu.TA_SET_CAPITAL.send(sender);
 			} else {
-				final Town newCapital = townyUniverse.getTown(split[1]);
-				
-				if (newCapital == null) {
-					TownyMessaging.sendErrorMsg(player, Translatable.of("msg_err_not_registered_1", split[1]));
-					return;
-				}
-				
-				try {
-					Nation nation = newCapital.getNation();
-					NationCommand.nationSet(player, split, true, nation);
-				} catch (Exception e) {
-					TownyMessaging.sendErrorMsg(player, e.getMessage());
-				}
-
+				Town newCapital = getTownOrThrow(split[1]);
+				Nation nation = getNationFromTownOrThrow(newCapital);
+				NationCommand.nationSet(player, split, true, nation);
 			}
 		} else if (split[0].equalsIgnoreCase("title")) {
 			checkPermOrThrow(sender, PermissionNodes.TOWNY_COMMAND_TOWNYADMIN_SET_TITLE.getNode());
