@@ -763,7 +763,7 @@ public class NationCommand extends BaseCommand implements CommandExecutor {
 		 * Only allow the player to assign ranks if they have the grant perm
 		 * for it.
 		 */
-		if (!TownyUniverse.getInstance().getPermissionSource().testPermission(player, PermissionNodes.TOWNY_COMMAND_NATION_RANK.getNode(rank.toLowerCase())))
+		if (!TownyUniverse.getInstance().getPermissionSource().testPermission(player, PermissionNodes.TOWNY_COMMAND_NATION_RANK.getNode(rank.toLowerCase(Locale.ROOT))))
 			throw new TownyException(Translatable.of("msg_no_permission_to_give_rank"));
 
 		if (split[0].equalsIgnoreCase("add")) {
