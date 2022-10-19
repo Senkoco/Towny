@@ -76,12 +76,17 @@ public class TownyMessaging {
 	/**
 	 * Sends an Error message (red) to the Player or console
 	 * and to the named Dev if DevMode is enabled.
-	 * Uses default_towny_prefix
+	 * Uses default_towny_prefix. 
+	 * 
+	 * If msg is empty nothing will be sent.
 	 *
 	 * @param sender the Object sending the message
 	 * @param msg the message to send
 	 */
 	public static void sendErrorMsg(Object sender, String msg) {
+		if (msg.isEmpty())
+			return;
+
 		if (sender instanceof CommandSender toSend) {
 			sendMessage(toSend, Translatable.of("default_towny_prefix").stripColors(sender instanceof ConsoleCommandSender).append(Colors.Red + msg).forLocale(toSend));
 		} else if (sender instanceof TownyObject townySender) {
