@@ -139,6 +139,7 @@ public class SQL_Schema {
 		columns.add("`jailUUID` VARCHAR(36) DEFAULT NULL");
 		columns.add("`jailCell` mediumint");
 		columns.add("`jailHours` mediumint");
+		columns.add("`jailBail` float DEFAULT NULL");
 		columns.add("`title` mediumtext");
 		columns.add("`surname` mediumtext");
 		columns.add("`protectionStatus` mediumtext");
@@ -217,6 +218,8 @@ public class SQL_Schema {
 		columns.add("`allies` mediumtext NOT NULL");
 		columns.add("`enemies` mediumtext NOT NULL");
 		columns.add("`taxes` float NOT NULL");
+		columns.add("`taxpercent` bool NOT NULL DEFAULT '0'");
+		columns.add("`maxPercentTaxAmount` float DEFAULT NULL");
 		columns.add("`spawnCost` float NOT NULL");
 		columns.add("`neutral` bool NOT NULL DEFAULT '0'");
 		columns.add("`uuid` VARCHAR(36) DEFAULT NULL");

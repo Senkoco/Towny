@@ -80,6 +80,7 @@ public class ObjectSaveUtil {
 			res_hm.put("jailUUID", resident.isJailed() ? resident.getJail().getUUID() : "");
 			res_hm.put("jailCell", resident.getJailCell());
 			res_hm.put("jailHours", resident.getJailHours());
+			res_hm.put("jailBail", resident.getJailBailCost());
 			res_hm.put("title", resident.getTitle());
 			res_hm.put("surname", resident.getSurname());
 			res_hm.put("town", resident.hasTown() ? resident.getTown().getUUID() : "");
@@ -197,6 +198,7 @@ public class ObjectSaveUtil {
 			if (town.getPrimaryJail() != null)
 				twn_hm.put("primaryJail", town.getPrimaryJail().getUUID());
 			twn_hm.put("trustedResidents", StringMgmt.join(toUUIDList(town.getTrustedResidents()), "#"));
+			twn_hm.put("trustedTowns", StringMgmt.join(town.getTrustedTownsUUIDS(), "#"));
 			twn_hm.put("allies", StringMgmt.join(town.getAlliesUUIDs(), "#"));
 			twn_hm.put("enemies", StringMgmt.join(town.getEnemiesUUIDs(), "#"));
 			return twn_hm;
@@ -219,6 +221,8 @@ public class ObjectSaveUtil {
 			nat_hm.put("allies", StringMgmt.join(nation.getAlliesUUIDs(), "#"));
 			nat_hm.put("enemies", StringMgmt.join(nation.getEnemiesUUIDs(), "#"));
 			nat_hm.put("taxes", nation.getTaxes());
+			nat_hm.put("taxpercent", nation.isTaxPercentage());
+			nat_hm.put("maxPercentTaxAmount", nation.getMaxPercentTaxAmount());
 			nat_hm.put("spawnCost", nation.getSpawnCost());
 			nat_hm.put("neutral", nation.isNeutral());
 			nat_hm.put("nationSpawn", nation.hasSpawn() ? parseLocationForSaving(nation.getSpawn()) : "");

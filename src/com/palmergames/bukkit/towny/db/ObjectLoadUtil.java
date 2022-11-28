@@ -135,6 +135,10 @@ public class ObjectLoadUtil {
 				line = keys.get("jailHours");
 				if (hasData(line))
 					resident.setJailHours(Integer.parseInt(line));
+
+				line = keys.get("jailBail");
+				if (hasData(line))
+					resident.setJailBailCost(Double.parseDouble(line));
 			}
 			line = keys.get("friends");
 			if (hasData(line))
@@ -297,6 +301,9 @@ public class ObjectLoadUtil {
 			line = keys.get("trustedResidents");
 			if (hasData(line))
 				getResidentsFromDB(line).stream().forEach(res -> town.addTrustedResident(res));
+			line = keys.get("trustedTowns");
+			if (hasData(line))
+				getTownsFromDB(line).stream().forEach(town::addTrustedTown);
 
 			line = keys.get("allies");
 			if (hasData(line))
@@ -356,7 +363,8 @@ public class ObjectLoadUtil {
 					return true;
 				}
 			}
-
+			nation.setTaxPercentage(getOrDefault(keys, "taxpercent", TownySettings.getNationDefaultTaxPercentage()));
+			nation.setMaxPercentTaxAmount(getOrDefault(keys, "maxPercentTaxAmount", TownySettings.getMaxNationTaxPercentAmount()));
 			nation.setTaxes(getOrDefault(keys, "taxes", 0.0));
 			nation.setSpawnCost(getOrDefault(keys, "spawnCost", TownySettings.getSpawnTravelCost()));
 			nation.setNeutral(getOrDefault(keys, "neutral", false));
@@ -619,6 +627,17 @@ public class ObjectLoadUtil {
 			town = universe.getTown(line.trim());
 		}
 		return town;
+	}
+
+	@Nullable
+	private List<Town> getTownsFromDB(String line) {
+		List<Town> towns = new ArrayList<>();
+		try {
+			towns = TownyAPI.getInstance().getTowns(toUUIDArray(line.split("#")));
+		} catch (IllegalArgumentException e) { // Legacy DB used Names instead of UUIDs.
+			towns = TownyAPI.getInstance().getTowns(line.split(","));
+		}
+		return towns;
 	}
 
 	@Nullable
